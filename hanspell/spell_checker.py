@@ -2,6 +2,7 @@
 """
 Python용 한글 맞춤법 검사 모듈
 """
+from __future__ import print_function
 
 import requests
 import json
@@ -10,23 +11,28 @@ import sys
 from collections import OrderedDict
 import xml.etree.ElementTree as ET
 
-from . import __version__
-from .response import Checked
-from .constants import base_url
-from .constants import CheckResult
+from response import Checked
+from constants import base_url
+from constants import CheckResult
 
 _agent = requests.Session()
 PY3 = sys.version_info[0] == 3
 
 
+def force_str(s):
+    if PY3:
+        if isinstance(s, bytes):
+            s = s.decode('utf-8')
+    else:
+        if isinstance(s, unicode):
+            s = s.encode('utf-8')
+    return s
+
+
 def _remove_tags(text):
-    text = u'<content>{}</content>'.format(text).replace('<br>','')
-    if not PY3:
-        text = text.encode('utf-8')
-
-    result = ''.join(ET.fromstring(text).itertext())
-
-    return result
+    text = u'<content>{}</content>'.format(text).replace('<br>', '')
+    result = ''.join(ET.fromstring(force_str(text)).itertext())
+    return force_str(result)
 
 
 def check(text):
@@ -112,5 +118,4 @@ def check(text):
         result['words'][word] = check_result
 
     result = Checked(**result)
-
     return result
